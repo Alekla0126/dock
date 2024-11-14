@@ -27,10 +27,13 @@ class DockIcon extends StatelessWidget {
   /// transition its size, creating a zoom effect.
   final Animation<double>? scaleAnimation;
 
+  /// The size of the icon, dynamically set based on the explorer size.
+  final double size;
+
   /// Creates a [DockIcon] widget.
   ///
-  /// The [item] parameter is required and provides the icon data. The
-  /// [isHovered] and [isDragging] parameters are optional and default to `false`.
+  /// The [item] parameter is required and provides the icon data.
+  /// [isHovered], [isDragging], and [size] are optional with default values.
   /// The [scaleAnimation] parameter can be provided for an additional scaling effect.
   const DockIcon({
     Key? key,
@@ -38,22 +41,23 @@ class DockIcon extends StatelessWidget {
     this.isHovered = false,
     this.isDragging = false,
     this.scaleAnimation,
+    this.size = 64, // Default size
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Adjust the icon size based on hover state
-    final double size = isHovered ? 80 : 64;
+    // Adjust icon size based on hover state
+    final double iconSize = isHovered ? size * 1.25 : size;
 
     Widget iconWidget = Container(
-      width: size,
-      height: size,
+      width: iconSize,
+      height: iconSize,
       decoration: BoxDecoration(
         color: Colors.primaries[item.icon.hashCode % Colors.primaries.length],
-        shape: BoxShape.rectangle, // Change shape to rectangle
-        borderRadius: BorderRadius.circular(12), // Adjust the corner radius
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(size * 0.2), // Corner radius based on size
       ),
-      child: Icon(item.icon, color: Colors.white, size: 32),
+      child: Icon(item.icon, color: Colors.white, size: iconSize * 0.5),
     );
 
     // Wrap with ScaleTransition if scaleAnimation is provided

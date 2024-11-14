@@ -4,9 +4,6 @@ import 'package:dock/widgets/dock_item.dart';
 import 'package:flutter/material.dart';
 
 /// A widget that simulates a macOS-style dock with draggable icons.
-///
-/// `MacOSDock` allows users to rearrange icons by dragging and dropping them
-/// within the dock, and provides a designated `DeleteZone` for removing items.
 class MacOSDock extends StatefulWidget {
   /// Creates a macOS-style dock with draggable and deletable items.
   const MacOSDock({super.key, required List<DockItem> initialItems});
@@ -16,7 +13,6 @@ class MacOSDock extends StatefulWidget {
 }
 
 class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
-  /// List of items in the dock.
   List<DockItem> items = [
     DockItem(icon: Icons.person),
     DockItem(icon: Icons.message),
@@ -25,31 +21,21 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
     DockItem(icon: Icons.photo),
   ];
 
-  /// The item currently being dragged, if any.
   DockItem? draggedItem;
-
-  /// Flag to indicate if an item has been dragged out of the dock.
   bool hasDraggedOutOfDock = false;
-
-  /// The index of the item currently being dragged, if any.
   int? draggedItemIndex;
-
-  /// The target index where the dragged item will be inserted.
   int? insertionIndex;
-
-  /// Initial drag position, used to calculate the distance moved by the dragged item.
   Offset? initialDragPosition;
-
-  /// Threshold distance for activating icon collapse behavior.
   final double movementThreshold = 20.0;
 
   @override
   Widget build(BuildContext context) {
+    // Calculate dock and icon sizes based on screen width
     double dockWidth = MediaQuery.of(context).size.width * 0.8;
+    double iconSize = dockWidth * 0.07; // Reduce to 7% of dock width for smaller icons
 
     List<Widget> dockItems = [];
     for (int i = 0; i <= items.length; i++) {
-      // Render placeholder or active target for drag operations
       if (i != draggedItemIndex) {
         dockItems.add(
           DragTarget<DockItem>(
@@ -83,10 +69,12 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
             },
             builder: (context, candidateData, rejectedData) {
               bool isActive = candidateData.isNotEmpty && insertionIndex == i;
+              bool shouldExpand = isActive && i != draggedItemIndex;
+
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: isActive ? 70 : 64,
-                height: isActive ? 70 : 64,
+                width: shouldExpand ? iconSize * 3 : iconSize,
+                height: shouldExpand ? iconSize * 3 : iconSize,
                 alignment: Alignment.center,
                 child: isActive && draggedItem != null
                     ? const SizedBox.shrink()
@@ -102,7 +90,7 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
         DockItem item = items[i];
         dockItems.add(
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            padding: EdgeInsets.symmetric(horizontal: iconSize * 0.1),
             child: MouseRegion(
               key: ValueKey(item),
               onEnter: (_) {
@@ -125,7 +113,7 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
                     draggedItem = item;
                     draggedItemIndex = i;
                     initialDragPosition = null;
-                    hasDraggedOutOfDock = false; // Reset flag
+                    hasDraggedOutOfDock = false;
                   });
                 },
                 onDragEnd: (wasAccepted) {
@@ -134,7 +122,7 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
                     draggedItemIndex = null;
                     insertionIndex = null;
                     initialDragPosition = null;
-                    hasDraggedOutOfDock = false; // Reset flag
+                    hasDraggedOutOfDock = false;
                   });
                 },
                 onDragUpdate: (details) {
@@ -148,6 +136,7 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
                     }
                   });
                 },
+                iconSize: iconSize, // Use the smaller icon size here
               ),
             ),
           ),
@@ -177,10 +166,15 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
                   ),
                   child: SizedBox(
                     width: dockWidth,
-                    height: 100,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: dockItems,
+                    height: iconSize * 1.5,
+                    child: Center( // Add Center widget to center the entire dock row
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center, // Center the icons
+                          children: dockItems,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -192,10 +186,6 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
     );
   }
 
-  /// Calculates the offset for each item to create a collapsing effect based on drag distance.
-  ///
-  /// Only applies an offset if the `movementThreshold` is exceeded. The offset minimizes
-  /// icons around the dragged icon, creating a visual effect of movement.
   Offset _calculateOffset(int index) {
     if (draggedItemIndex == null ||
         insertionIndex == null ||
@@ -203,11 +193,10 @@ class _MacOSDockState extends State<MacOSDock> with TickerProviderStateMixin {
       return Offset.zero;
     }
 
-    // Calculate drag distance and apply offset only if threshold exceeded
     final dragDistance = (initialDragPosition! - Offset.zero).distance;
 
     if (dragDistance > movementThreshold) {
-      const double minimizedOffset = 0.3;
+      const double minimizedOffset = 0.5;
 
       if (draggedItemIndex! < insertionIndex!) {
         if (index > draggedItemIndex! && index < insertionIndex!) {

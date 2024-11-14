@@ -1,5 +1,3 @@
-/// The entry point of the Dock application, featuring a gradient background and a centered dock widget.
-
 import 'package:flutter/material.dart';
 import 'widgets/dock_item.dart';
 import 'widgets/macos_dock.dart';
